@@ -32,7 +32,7 @@ var (
 
 var p = &Params{
 	Time:       uint32(timeEnv),
-	Memory:     uint32(memoryEnv),
+	Memory:     uint32(memoryEnv * 1024),
 	Threads:    uint8(threadsEnv),
 	KeyLength:  uint32(keyLengthEnv),
 	SaltLength: uint32(saltLengthEnv),
