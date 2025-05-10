@@ -1,0 +1,116 @@
+name: CI
+
+# Déclenchement sur PR vers main et push sur main
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  # ---------------------------------------------------
+  # Tests backend (Go)
+  # ---------------------------------------------------
+  test-backend:
+    name: 🧪 Tests Backend (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23
+
+      - name: Install & Test
+        run: |
+          cd backend
+          go test -v ./...
+
+  # ---------------------------------------------------
+  # Tests frontend (Next.js + TypeScript)
+  # ---------------------------------------------------
+  test-frontend:
+    name: 🧪 Tests Frontend (Next.js)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install & Lint
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+
+      - name: Run Tests
+        run: |
+          cd frontend
+          npm test
+
+  # ---------------------------------------------------
+  # Tests IA (Python)
+  # ---------------------------------------------------
+  test-ia:
+    name: 🧪 Tests IA (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('ia/pyproject.toml') }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: Install & Test
+        run: |
+          cd ia
+          pip install poetry
+          poetry install
+          poetry run pytest --maxfail=1 --disable-warnings -q
+
+  # ---------------------------------------------------
+  # Upload des résultats de test (optionnel)
+  # ---------------------------------------------------
+  upload-test-results:
+    name: 📊 Upload Test Results
+    needs: [test-backend, test-frontend, test-ia]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-reports
+          path: |
+            backend/coverage.out
+            frontend/coverage
+            ia/htmlcov

@@ -1,0 +1,30 @@
+name: CD
+
+# Déclenchement sur push sur main
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  release:
+    name: 🚀 Release Semantic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # nécessaire pour semantic-release
+
+      - name: Setup Node.js (pour semantic-release)
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: "https://registry.npmjs.org/"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
