@@ -27,4 +27,20 @@ func InitDB() {
 		log.Fatal("Migration failed:", err)
 	}
 	DB = db
+
+}
+
+// InitDBWithDialector permet d’injecter un dialector (Postgres, SQLite…)
+func InitDBWithDialector(dialector gorm.Dialector) (*gorm.DB, error) {
+	db, err := gorm.Open(dialector, &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect database: %w", err)
+	}
+	// Auto‑migration des modèles
+	if err := models.AutoMigrateModels(db); err != nil {
+		log.Printf("Migration failed: %v", err)
+		return nil, fmt.Errorf("migration failed: %w", err)
+	}
+	DB = db
+	return db, nil
 }
