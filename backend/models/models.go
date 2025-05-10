@@ -10,13 +10,22 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Username     string    `gorm:"type:varchar(50);not null;uniqueIndex"`
-	Email        string    `gorm:"type:varchar(255);not null;uniqueIndex"`
-	PasswordHash string    `gorm:"type:char(60);not null"` // ou varchar(100) si vous variez
-	AvatarURL    *string   `gorm:"type:text"`
-	CreatedAt    time.Time `gorm:"autoCreateTime"`
-	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
+	ID                   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Username             string    `gorm:"type:varchar(50);not null;uniqueIndex"`
+	Email                string    `gorm:"type:varchar(100);not null;uniqueIndex"`
+	PasswordHash         string    `gorm:"type:char(60);not null"` // ou varchar(100) si vous variez
+	AvatarURL            *string   `gorm:"type:varchar(255)"`
+	CreatedAt            time.Time `gorm:"autoCreateTime"`
+	UpdatedAt            time.Time `gorm:"autoUpdateTime"`
+	Role                 string    `gorm:"type:varchar(20);not null;default:'user'"`
+	Session              string    `gorm:"type:varchar(255);not null;default:gen_random_uuid()"`
+	IsVerifiedEmail      bool      `gorm:"type:boolean;default:false"`
+	PasswordResetToken   string    `gorm:"type:varchar(255)"`
+	PasswordResetExpires time.Time `gorm:"type:timestamptz"` // durée environ 15minutes
+	// Role peut être 'user', 'admin', etc.
+	// Vous pouvez également utiliser un enum si vous préférez
+	// ou une table de référence pour les rôles
+
 }
 
 type Stack struct {

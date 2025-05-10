@@ -24,7 +24,7 @@ type UserRepo interface {
 	FindByStackOwnerIDAndPostID(stackID, postID int) (*User, error) // FindByStackOwnerIDAndPostID renvoie le propriétaire d'une stack et d'un post
 	CountByStackID(stackID int) (int64, error)                      // CountByStackID renvoie le nombre d'utilisateurs associés à une stack
 	FindByStackID(stackID int) ([]*User, error)                     // FindByStackID renvoie les utilisateurs associés à une stack
-	FindByPostID(postID int) ([]*User, error)                       // FindByPostID renvoie les utilisateurs associés à un post
+	FindByPostID(postID int) (*User, error)                         // FindByPostID renvoie les utilisateurs associés à un post
 	FindByContributorID(contributorID int) ([]*User, error)         // FindByContributorID renvoie les utilisateurs associés à un contributeur
 }
 
@@ -82,7 +82,7 @@ func (r *GormUserRepo) FindByID(id int) (*User, error) {
 }
 
 // FindByPostID implements UserRepo.
-func (r *GormUserRepo) FindByPostID(postID int) ([]*User, error) {
+func (r *GormUserRepo) FindByPostID(postID int) (*User, error) {
 	panic("unimplemented")
 }
 
