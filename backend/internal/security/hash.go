@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"crypto/subtle"
@@ -20,7 +22,21 @@ type Params struct {
 	SaltLength uint32
 }
 
-var p = &Params{1, 64 * 1024, 4, 32, 16}
+var (
+	timeEnv, _       = strconv.ParseUint(os.Getenv("TIME"), 10, 32)
+	memoryEnv, _     = strconv.ParseUint(os.Getenv("MEMORY"), 10, 32)
+	threadsEnv, _    = strconv.ParseUint(os.Getenv("THREADS"), 10, 8)
+	keyLengthEnv, _  = strconv.ParseUint(os.Getenv("KEYLENGTH"), 10, 32)
+	saltLengthEnv, _ = strconv.ParseUint(os.Getenv("SALTLENGTH"), 10, 32)
+)
+
+var p = &Params{
+	Time:       uint32(timeEnv),
+	Memory:     uint32(memoryEnv),
+	Threads:    uint8(threadsEnv),
+	KeyLength:  uint32(keyLengthEnv),
+	SaltLength: uint32(saltLengthEnv),
+}
 
 // HashPassword génère un hash Argon2id encodé pour stockage.
 func HashPassword(password string) (string, error) {
