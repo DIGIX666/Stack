@@ -1,3 +1,22 @@
 .idea/
 .DS-Store
 .env
+current_folder_tree.md
+# Fichiers de build
+dist/
+build/
+
+# Variables d’environnement locales
+.env.local
+.env.*.local
+
+# Modules et dépendances
+node_modules/
+vendor/
+
+# Logs
+*.log
+
+# Artéfacts Docker
+docker-compose.override.yml
+
