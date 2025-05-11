@@ -104,11 +104,11 @@ func (ctrl *UserController) Count() (int64, error) {
 // FindByEmail gère la recherche d'un utilisateur par son email
 func (ctrl *UserController) FindByEmail(email string) (models.User, error) {
 	// 1. Vérifie si l’utilisateur existe
-	user, err := ctrl.repo.FindByEmail(email)
+	isExist, user, err := ctrl.repo.FindByEmail(email)
 	if err != nil {
 		return models.User{}, err
 	}
-	if user == nil {
+	if !isExist {
 		return models.User{}, models.ErrUserNotFound
 	}
 

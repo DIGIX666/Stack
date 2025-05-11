@@ -61,18 +61,20 @@ func (s *Service) GenerateToken(user *models.User) (string, int64, error) {
 // Le token est envoyé au client et doit être stocké de manière sécurisée
 // Le token est envoyé dans l'en-tête Authorization des requêtes HTTP
 // Le token est signé avec la clé secrète
-func (s *Service) GenerateRefreshToken(user *models.User) (string, error) {
+func (s *Service) GenerateRefreshToken(user *models.User) (string, int64, error) {
+	// Set expiration time
+	expirationTime := time.Now().Add(5 * 24 * time.Hour).Unix()
 	claims := jwt.MapClaims{
 		"sub":  user.ID,
 		"role": user.Role,
-		"exp":  time.Now().Add(5 * 24 * time.Hour).Unix(), // 5 jours
+		"exp":  expirationTime, // 5 jours
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(s.secretKey))
 	if err != nil {
-		return "", err
+		return "", -1, err
 	}
-	return signedToken, nil
+	return signedToken, expirationTime, nil
 }
 
 // ValidateToken vérifie la validité du token JWT
@@ -111,21 +113,22 @@ func (s *Service) ValidateToken(tokenString string) (uint, string, error) {
 // Le nouveau token est utilisé pour authentifier l'utilisateur lors des requêtes ultérieures
 // Le nouveau token est envoyé au client et doit être stocké de manière sécurisée
 // Le nouveau token est envoyé dans l'en-tête Authorization des requêtes HTTP
-func (s *Service) RefreshToken(tokenString string) (string, error) {
+func (s *Service) RefreshToken(tokenString string) (string, int64, error) {
 	userID, role, err := s.ValidateToken(tokenString)
 	if err != nil {
-		return "", err
+		return "", -1, err
 	}
 
-	newToken, err := s.GenerateRefreshToken(&models.User{
+	//TODO: check if returning the expire time is necessary
+	newToken, expirTime, err := s.GenerateRefreshToken(&models.User{
 		ID:   uuid.MustParse(fmt.Sprintf("%d", userID)),
 		Role: role,
 	})
 	if err != nil {
-		return "", err
+		return "", expirTime, err
 	}
 
-	return newToken, nil
+	return newToken, expirTime, nil
 }
 func (s *Service) InvalidateToken(tokenString string) error {
 	// Invalidate the token by adding it to a blacklist or similar mechanism

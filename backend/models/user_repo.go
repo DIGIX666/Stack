@@ -15,7 +15,7 @@ type UserRepo interface {
 	List() ([]*User, error)  // List renvoie tous les utilisateurs
 	Count() (int64, error)   // Count renvoie le nombre total d'utilisateurs
 
-	FindByEmail(email string) (*User, error)
+	FindByEmail(email string) (bool, *User, error)
 	FindByID(id int) (*User, error)                              // FindByID renvoie l'utilisateur par son ID
 	FindByUsername(username string) (*User, error)               // FindByUsername renvoie l'utilisateur par son nom d'utilisateur
 	FindByEmailOrUsername(email, username string) (*User, error) // FindByEmailOrUsername renvoie l'utilisateur par son email ou son nom d'utilisateur
@@ -41,14 +41,14 @@ func (r *GormUserRepo) Create(user *User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *GormUserRepo) FindByEmail(email string) (*User, error) {
+func (r *GormUserRepo) FindByEmail(email string) (bool, *User, error) {
 	var u User
 	if err := r.db.Where("email = ?", email).First(&u).Error; err != nil {
 
 		log.Printf("Error finding user by email: %v", err)
-		return nil, err
+		return true, nil, err
 	}
-	return &u, nil
+	return false, &u, nil
 }
 
 // Count implements UserRepo.

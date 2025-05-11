@@ -7,13 +7,13 @@ import (
 
 // AuthController gère l’authentification
 type StackController struct {
-	repo models.UserRepo
+	repo models.StackRepo
 }
 
 // NewAuthController initialise l’AuthController avec ses dépendances
-func NewStackController(db *gorm.DB) *UserController {
+func NewStackController(db *gorm.DB) *StackController {
 	// 1. Instancie le repo GORM
-	userRepo := models.NewGormUserRepo(db)
+	stackRepo := models.NewGormStackRepo(db)
 	// 2. Retourne le controller prêt à l’emploi
-	return &UserController{repo: userRepo}
+	return &StackController{repo: stackRepo}
 }

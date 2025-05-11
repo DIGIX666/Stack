@@ -2,13 +2,16 @@
 package controllers
 
 import (
+	"net/http"
 	"strconv"
 
 	"gorm.io/gorm"
 
 	// tes DTO de requête/réponse
 	// hash, JWT…
-	"github.com/DIGIX666/stack/backend/internal/security"
+
+	"github.com/DIGIX666/stack/backend/interfaces/dto"
+	"github.com/DIGIX666/stack/backend/internal/authentification"
 	"github.com/DIGIX666/stack/backend/models"
 	"github.com/gin-gonic/gin"
 )
@@ -28,52 +31,64 @@ func NewAuthController(db *gorm.DB) *AuthController {
 
 // Signup gère l’inscription d’un nouvel utilisateur
 func (ctrl *AuthController) Signup(c *gin.Context) {
-	// 1. Vérifie si l’utilisateur existe déjà
-	var user models.User
-	existingUser, err := ctrl.repo.FindByEmail(user.Email)
-	if err != nil {
-		return models.User{}, err
+	var authService authentification.AuthService
+	var signupReq dto.SignupRequest
+
+	if err := c.ShouldBindJSON(&signupReq); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request: " + err.Error()})
+		return
 	}
-	if existingUser != nil {
-		return models.User{}, models.ErrUserAlreadyExists
+	signupResponse, err := authService.Signup(signupReq)
+	if err != nil {
+		if err == authentification.ErrEmailAlreadyUsed {
+			c.JSON(400, gin.H{"error": "Email already used"})
+			return
+		}
+		c.JSON(500, gin.H{"error": "Internal server error: " + err.Error()})
+		return
 	}
 
-	// 2. Hash le mot de passe
-	hashedPassword, err := security.HashPassword(user.PasswordHash)
-	if err != nil {
-		return models.User{}, err
-	}
-	user.PasswordHash = hashedPassword
+	// 5. Retourne le token et les informations de l’utilisateur
 
-	// 3. Enregistre l’utilisateur dans la base de données
-	err = ctrl.repo.Create(&user)
-	if err != nil {
-		return models.User{}, err
-	}
+	c.Header("Authorization", signupResponse.AccessToken)
+	c.Header("Content-Type", "application/json")
+	c.Header("Access-Control-Expose-Headers", "Authorization")
+	c.Header("Access-Control-Allow-Credentials", "true")
+	c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 
-	return user, nil
+	c.JSON(http.StatusCreated, signupResponse)
 }
 
 // Login gère la connexion d’un utilisateur
-func (ctrl *AuthController) Login(email, password string) (models.User, error) {
-	// 1. Vérifie si l’utilisateur existe
-	user, err := ctrl.repo.FindByEmail(email)
+func (ctrl *AuthController) Login(c *gin.Context) {
+	var authService authentification.AuthService
+	var loginReq dto.LoginRequest
+
+	if err := c.ShouldBindJSON(&loginReq); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request: " + err.Error()})
+		return
+	}
+
+	loginResponse, err := authService.Login(loginReq)
 	if err != nil {
-		return models.User{}, err
+		if err == authentification.ErrInvalidCredentials {
+			c.JSON(401, gin.H{"error": "Invalid credentials"})
+			return
+		}
+		c.JSON(500, gin.H{"error": "Internal server error: " + err.Error()})
+		return
 	}
-	if user == nil {
-		return models.User{}, models.ErrUserNotFound
-	}
+	// 5. Retourne le token et les informations de l’utilisateur
+	c.Header("Authorization", loginResponse.AccessToken)
+	c.Header("Content-Type", "application/json")
+	c.Header("Access-Control-Expose-Headers", "Authorization")
+	c.Header("Access-Control-Allow-Credentials", "true")
+	c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 
-	// 2. Vérifie le mot de passe
-	passwordCheck, err := security.VerifyPassword(user.PasswordHash, password)
-	if !passwordCheck {
-		return models.User{}, models.ErrInvalidPassword
-	} else if err != nil {
-		return models.User{}, err
-	}
+	c.JSON(http.StatusOK, loginResponse)
 
-	return *user, nil
 }
 
 // Logout gère la déconnexion d’un utilisateur
