@@ -63,7 +63,7 @@ func (s *Service) GenerateToken(user *models.User) (string, int64, error) {
 // Le token est signé avec la clé secrète
 func (s *Service) GenerateRefreshToken(user *models.User) (string, int64, error) {
 	// Set expiration time
-	expirationTime := time.Now().Add(5 * 24 * time.Hour).Unix()
+	expirationTime := time.Now().Add(5 * 24 * time.Hour).Unix() // 5 jours
 	claims := jwt.MapClaims{
 		"sub":  user.ID,
 		"role": user.Role,
